@@ -11,7 +11,12 @@ public record EsimProfileResponse(
         UUID deviceId,
         UUID subscriptionId,
         String activationCode,
+        String smdpAddress,
         EsimStatus status,
+        Instant provisionedAt,
+        Instant activatedAt,
+        Instant suspendedAt,
+        Instant terminatedAt,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -22,7 +27,12 @@ public record EsimProfileResponse(
                 profile.deviceId(),
                 profile.subscriptionId(),
                 profile.activationCode(),
+                profile.smdpAddress(),
                 profile.status(),
+                profile.provisionedAt(),
+                profile.activatedAt(),
+                profile.suspendedAt(),
+                profile.terminatedAt(),
                 profile.createdAt(),
                 profile.updatedAt());
     }

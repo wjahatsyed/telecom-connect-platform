@@ -5,21 +5,24 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wajahat.telecom.esimprovisioning.domain.EsimProfile;
+import com.wajahat.telecom.esimprovisioning.repository.EsimProfileRepository;
+import com.wajahat.telecom.esimprovisioning.service.EsimProvisioningService;
 import com.wajahat.telecom.esimprovisioning.web.EsimProvisioningController;
+import java.util.LinkedHashMap;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(
-        controllers = EsimProvisioningController.class,
-        includeFilters = @ComponentScan.Filter(
-                type = FilterType.REGEX,
-                pattern = "com\\.wajahat\\.telecom\\.esimprovisioning\\.(service|repository|web)\\..*"))
+@WebMvcTest(EsimProvisioningController.class)
+@Import({EsimProvisioningService.class, EsimProvisioningControllerTests.TestConfig.class})
 class EsimProvisioningControllerTests {
 
     @Autowired
@@ -74,5 +77,27 @@ class EsimProvisioningControllerTests {
         mockMvc.perform(post("/esims/{iccid}/suspend", iccid))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("Conflict"));
+    }
+
+    @TestConfiguration
+    static class TestConfig {
+
+        @Bean
+        EsimProfileRepository esimProfileRepository() {
+            return new EsimProfileRepository() {
+                private final java.util.Map<String, EsimProfile> profiles = new LinkedHashMap<>();
+
+                @Override
+                public EsimProfile save(EsimProfile profile) {
+                    profiles.put(profile.iccid(), profile);
+                    return profile;
+                }
+
+                @Override
+                public Optional<EsimProfile> findByIccid(String iccid) {
+                    return Optional.ofNullable(profiles.get(iccid));
+                }
+            };
+        }
     }
 }

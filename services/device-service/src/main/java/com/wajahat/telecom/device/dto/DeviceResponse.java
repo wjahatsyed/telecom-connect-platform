@@ -1,6 +1,7 @@
 package com.wajahat.telecom.device.dto;
 
 import com.wajahat.telecom.device.domain.Device;
+import com.wajahat.telecom.device.domain.DeviceStatus;
 import com.wajahat.telecom.device.domain.DeviceType;
 import java.time.Instant;
 import java.util.UUID;
@@ -11,7 +12,10 @@ public record DeviceResponse(
         DeviceType type,
         String name,
         String imei,
-        Instant createdAt) {
+        String eid,
+        DeviceStatus status,
+        Instant createdAt,
+        Instant updatedAt) {
 
     public static DeviceResponse from(Device device) {
         return new DeviceResponse(
@@ -20,6 +24,9 @@ public record DeviceResponse(
                 device.type(),
                 device.name(),
                 device.imei(),
-                device.createdAt());
+                device.eid(),
+                device.status(),
+                device.createdAt(),
+                device.updatedAt());
     }
 }

@@ -1,6 +1,7 @@
 package com.wajahat.telecom.customer.service;
 
 import com.wajahat.telecom.customer.domain.Customer;
+import com.wajahat.telecom.customer.domain.CustomerStatus;
 import com.wajahat.telecom.customer.dto.CreateCustomerRequest;
 import com.wajahat.telecom.customer.exception.CustomerNotFoundException;
 import com.wajahat.telecom.customer.repository.CustomerRepository;
@@ -34,7 +35,10 @@ public class CustomerService {
                 request.displayName(),
                 request.email(),
                 request.phoneNumber(),
-                Instant.now(clock));
+                CustomerStatus.ACTIVE,
+                Instant.now(clock),
+                Instant.now(clock),
+                null);
 
         return customerRepository.save(customer);
     }

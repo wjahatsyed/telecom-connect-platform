@@ -27,7 +27,8 @@ class DeviceServiceTests {
                 customerId,
                 DeviceType.PHONE,
                 "Field Engineer Phone",
-                "123456789012345"));
+                "123456789012345",
+                null));
 
         assertThat(device.deviceId()).isNotNull();
         assertThat(device.customerId()).isEqualTo(customerId);
@@ -37,7 +38,7 @@ class DeviceServiceTests {
     @Test
     void listsDevicesForCustomer() {
         UUID customerId = UUID.randomUUID();
-        deviceService.create(new CreateDeviceRequest(customerId, DeviceType.TABLET, "Tablet", "123456789012345"));
+        deviceService.create(new CreateDeviceRequest(customerId, DeviceType.TABLET, "Tablet", "123456789012345", null));
 
         assertThat(deviceService.getByCustomerId(customerId)).hasSize(1);
     }

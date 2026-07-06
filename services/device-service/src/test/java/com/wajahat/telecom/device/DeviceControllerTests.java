@@ -6,21 +6,25 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wajahat.telecom.device.domain.Device;
+import com.wajahat.telecom.device.repository.DeviceRepository;
+import com.wajahat.telecom.device.service.DeviceService;
 import com.wajahat.telecom.device.web.DeviceController;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(
-        controllers = DeviceController.class,
-        includeFilters = @ComponentScan.Filter(
-                type = FilterType.REGEX,
-                pattern = "com\\.wajahat\\.telecom\\.device\\.(service|repository|web)\\..*"))
+@WebMvcTest(DeviceController.class)
+@Import({DeviceService.class, DeviceControllerTests.TestConfig.class})
 class DeviceControllerTests {
 
     @Autowired
@@ -72,5 +76,34 @@ class DeviceControllerTests {
                                 """.formatted(UUID.randomUUID())))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.violations").isArray());
+    }
+
+    @TestConfiguration
+    static class TestConfig {
+
+        @Bean
+        DeviceRepository deviceRepository() {
+            return new DeviceRepository() {
+                private final java.util.Map<UUID, Device> devices = new LinkedHashMap<>();
+
+                @Override
+                public Device save(Device device) {
+                    devices.put(device.deviceId(), device);
+                    return device;
+                }
+
+                @Override
+                public Optional<Device> findById(UUID deviceId) {
+                    return Optional.ofNullable(devices.get(deviceId));
+                }
+
+                @Override
+                public List<Device> findByCustomerId(UUID customerId) {
+                    return devices.values().stream()
+                            .filter(device -> device.customerId().equals(customerId))
+                            .toList();
+                }
+            };
+        }
     }
 }

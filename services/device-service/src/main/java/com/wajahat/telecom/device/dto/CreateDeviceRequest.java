@@ -11,5 +11,6 @@ public record CreateDeviceRequest(
         @NotNull UUID customerId,
         @NotNull DeviceType type,
         @NotBlank @Size(max = 120) String name,
-        @NotBlank @Pattern(regexp = "\\d{14,16}", message = "must contain 14 to 16 digits") String imei) {
+        @NotBlank @Pattern(regexp = "\\d{14,16}", message = "must contain 14 to 16 digits") String imei,
+        @Size(max = 64) String eid) {
 }

@@ -9,5 +9,9 @@ public record Device(
         DeviceType type,
         String name,
         String imei,
-        Instant createdAt) {
+        String eid,
+        DeviceStatus status,
+        Instant createdAt,
+        Instant updatedAt,
+        Long version) {
 }
