@@ -79,6 +79,86 @@ Each service exposes:
 
 Service ports are assigned in each module's `application.yml`.
 
+## API Overview
+
+The first domain slice uses in-memory persistence so each service can run independently while the API and domain boundaries settle.
+
+| Service | Port | APIs |
+| --- | --- | --- |
+| `customer-service` | `8082` | `POST /customers`, `GET /customers/{customerId}`, `GET /customers` |
+| `device-service` | `8083` | `POST /devices`, `GET /devices/{deviceId}`, `GET /devices/customer/{customerId}` |
+| `subscription-service` | `8085` | `POST /subscriptions`, `GET /subscriptions/{subscriptionId}`, `GET /subscriptions/device/{deviceId}`, lifecycle actions |
+| `esim-provisioning-service` | `8084` | `POST /esims/provision`, `GET /esims/{iccid}`, lifecycle actions |
+
+Subscription lifecycle actions:
+
+- `POST /subscriptions/{subscriptionId}/activate`
+- `POST /subscriptions/{subscriptionId}/suspend`
+- `POST /subscriptions/{subscriptionId}/resume`
+- `POST /subscriptions/{subscriptionId}/cancel`
+
+eSIM lifecycle actions:
+
+- `POST /esims/{iccid}/activate`
+- `POST /esims/{iccid}/suspend`
+- `POST /esims/{iccid}/terminate`
+
+## Example Requests
+
+Create a customer:
+
+```bash
+curl -X POST http://localhost:8082/customers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "ENTERPRISE",
+    "displayName": "Acme Connectivity",
+    "email": "ops@acme.example",
+    "phoneNumber": "+15551234567"
+  }'
+```
+
+Create a device:
+
+```bash
+curl -X POST http://localhost:8083/devices \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "00000000-0000-0000-0000-000000000001",
+    "type": "IOT_SENSOR",
+    "name": "Cold Chain Sensor",
+    "imei": "123456789012345"
+  }'
+```
+
+Create and activate a subscription:
+
+```bash
+curl -X POST http://localhost:8085/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "00000000-0000-0000-0000-000000000001",
+    "deviceId": "00000000-0000-0000-0000-000000000002",
+    "planCode": "GLOBAL_5GB"
+  }'
+
+curl -X POST http://localhost:8085/subscriptions/{subscriptionId}/activate
+```
+
+Provision and activate an eSIM:
+
+```bash
+curl -X POST http://localhost:8084/esims/provision \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "00000000-0000-0000-0000-000000000001",
+    "deviceId": "00000000-0000-0000-0000-000000000002",
+    "subscriptionId": "00000000-0000-0000-0000-000000000003"
+  }'
+
+curl -X POST http://localhost:8084/esims/{iccid}/activate
+```
+
 ## Next Milestones
 
 - Add OpenAPI contracts per service
