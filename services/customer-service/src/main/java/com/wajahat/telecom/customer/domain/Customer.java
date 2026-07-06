@@ -9,5 +9,8 @@ public record Customer(
         String displayName,
         String email,
         String phoneNumber,
-        Instant createdAt) {
+        CustomerStatus status,
+        Instant createdAt,
+        Instant updatedAt,
+        Long version) {
 }

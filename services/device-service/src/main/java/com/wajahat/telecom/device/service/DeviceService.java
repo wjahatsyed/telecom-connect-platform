@@ -1,6 +1,7 @@
 package com.wajahat.telecom.device.service;
 
 import com.wajahat.telecom.device.domain.Device;
+import com.wajahat.telecom.device.domain.DeviceStatus;
 import com.wajahat.telecom.device.dto.CreateDeviceRequest;
 import com.wajahat.telecom.device.exception.DeviceNotFoundException;
 import com.wajahat.telecom.device.repository.DeviceRepository;
@@ -34,7 +35,11 @@ public class DeviceService {
                 request.type(),
                 request.name(),
                 request.imei(),
-                Instant.now(clock));
+                request.eid(),
+                DeviceStatus.ACTIVE,
+                Instant.now(clock),
+                Instant.now(clock),
+                null);
 
         return deviceRepository.save(device);
     }

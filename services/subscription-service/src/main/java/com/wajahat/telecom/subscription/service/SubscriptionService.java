@@ -37,8 +37,12 @@ public class SubscriptionService {
                 request.deviceId(),
                 request.planCode(),
                 SubscriptionStatus.PENDING,
+                null,
+                null,
+                null,
                 now,
-                now);
+                now,
+                null);
 
         return subscriptionRepository.save(subscription);
     }
@@ -57,7 +61,7 @@ public class SubscriptionService {
         if (subscription.status() != SubscriptionStatus.PENDING && subscription.status() != SubscriptionStatus.SUSPENDED) {
             throw new InvalidSubscriptionStateException(subscriptionId, subscription.status(), "activate");
         }
-        return saveWithStatus(subscription, SubscriptionStatus.ACTIVE);
+        return saveWithStatus(subscription, SubscriptionStatus.ACTIVE, Instant.now(clock), subscription.suspendedAt(), subscription.cancelledAt());
     }
 
     public Subscription suspend(UUID subscriptionId) {
@@ -65,7 +69,7 @@ public class SubscriptionService {
         if (subscription.status() != SubscriptionStatus.ACTIVE) {
             throw new InvalidSubscriptionStateException(subscriptionId, subscription.status(), "suspend");
         }
-        return saveWithStatus(subscription, SubscriptionStatus.SUSPENDED);
+        return saveWithStatus(subscription, SubscriptionStatus.SUSPENDED, subscription.activatedAt(), Instant.now(clock), subscription.cancelledAt());
     }
 
     public Subscription resume(UUID subscriptionId) {
@@ -73,7 +77,7 @@ public class SubscriptionService {
         if (subscription.status() != SubscriptionStatus.SUSPENDED) {
             throw new InvalidSubscriptionStateException(subscriptionId, subscription.status(), "resume");
         }
-        return saveWithStatus(subscription, SubscriptionStatus.ACTIVE);
+        return saveWithStatus(subscription, SubscriptionStatus.ACTIVE, subscription.activatedAt(), subscription.suspendedAt(), subscription.cancelledAt());
     }
 
     public Subscription cancel(UUID subscriptionId) {
@@ -81,10 +85,20 @@ public class SubscriptionService {
         if (subscription.status() == SubscriptionStatus.CANCELLED) {
             throw new InvalidSubscriptionStateException(subscriptionId, subscription.status(), "cancel");
         }
-        return saveWithStatus(subscription, SubscriptionStatus.CANCELLED);
+        return saveWithStatus(subscription, SubscriptionStatus.CANCELLED, subscription.activatedAt(), subscription.suspendedAt(), Instant.now(clock));
     }
 
-    private Subscription saveWithStatus(Subscription subscription, SubscriptionStatus status) {
-        return subscriptionRepository.save(subscription.withStatus(status, Instant.now(clock)));
+    private Subscription saveWithStatus(
+            Subscription subscription,
+            SubscriptionStatus status,
+            Instant activatedAt,
+            Instant suspendedAt,
+            Instant cancelledAt) {
+        return subscriptionRepository.save(subscription.transitionTo(
+                status,
+                activatedAt,
+                suspendedAt,
+                cancelledAt,
+                Instant.now(clock)));
     }
 }

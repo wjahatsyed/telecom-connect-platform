@@ -70,6 +70,39 @@ Stop the local infrastructure:
 docker compose -f platform/docker/docker-compose.yml down
 ```
 
+PostgreSQL is exposed locally on `localhost:5432`:
+
+- Database: `telecom_connect`
+- Username: `telecom`
+- Password: `telecom`
+
+The core services use Spring Data JPA with Flyway migrations. Each service owns its tables and stores foreign identifiers from other services as plain UUID values. There are intentionally no cross-service foreign keys or direct joins.
+
+Because the local Docker Compose setup uses one PostgreSQL database for convenience, each service uses its own Flyway history table:
+
+- `customer-service`: `flyway_schema_history_customer`
+- `device-service`: `flyway_schema_history_device`
+- `subscription-service`: `flyway_schema_history_subscription`
+- `esim-provisioning-service`: `flyway_schema_history_esim`
+
+Run a service against the local database:
+
+```bash
+mvn -pl services/customer-service spring-boot:run
+```
+
+Run tests, including PostgreSQL Testcontainers integration tests:
+
+```bash
+mvn test
+```
+
+Run one focused service test suite:
+
+```bash
+mvn -pl services/esim-provisioning-service test
+```
+
 ## Health Checks
 
 Each service exposes:

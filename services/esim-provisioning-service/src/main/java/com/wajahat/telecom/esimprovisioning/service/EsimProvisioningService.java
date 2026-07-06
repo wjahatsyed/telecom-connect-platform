@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class EsimProvisioningService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String SMDP_ADDRESS = "telecom-connect.example";
 
     private final EsimProfileRepository esimProfileRepository;
     private final Clock clock;
@@ -40,9 +41,15 @@ public class EsimProvisioningService {
                 request.deviceId(),
                 request.subscriptionId(),
                 generateActivationCode(),
+                SMDP_ADDRESS,
                 EsimStatus.PROVISIONED,
                 now,
-                now);
+                null,
+                null,
+                null,
+                now,
+                now,
+                null);
 
         return esimProfileRepository.save(profile);
     }
@@ -57,7 +64,7 @@ public class EsimProvisioningService {
         if (profile.status() != EsimStatus.PROVISIONED && profile.status() != EsimStatus.SUSPENDED) {
             throw new InvalidEsimStateException(iccid, profile.status(), "activate");
         }
-        return saveWithStatus(profile, EsimStatus.ACTIVE);
+        return saveWithStatus(profile, EsimStatus.ACTIVE, Instant.now(clock), profile.suspendedAt(), profile.terminatedAt());
     }
 
     public EsimProfile suspend(String iccid) {
@@ -65,7 +72,7 @@ public class EsimProvisioningService {
         if (profile.status() != EsimStatus.ACTIVE) {
             throw new InvalidEsimStateException(iccid, profile.status(), "suspend");
         }
-        return saveWithStatus(profile, EsimStatus.SUSPENDED);
+        return saveWithStatus(profile, EsimStatus.SUSPENDED, profile.activatedAt(), Instant.now(clock), profile.terminatedAt());
     }
 
     public EsimProfile terminate(String iccid) {
@@ -73,11 +80,21 @@ public class EsimProvisioningService {
         if (profile.status() == EsimStatus.TERMINATED) {
             throw new InvalidEsimStateException(iccid, profile.status(), "terminate");
         }
-        return saveWithStatus(profile, EsimStatus.TERMINATED);
+        return saveWithStatus(profile, EsimStatus.TERMINATED, profile.activatedAt(), profile.suspendedAt(), Instant.now(clock));
     }
 
-    private EsimProfile saveWithStatus(EsimProfile profile, EsimStatus status) {
-        return esimProfileRepository.save(profile.withStatus(status, Instant.now(clock)));
+    private EsimProfile saveWithStatus(
+            EsimProfile profile,
+            EsimStatus status,
+            Instant activatedAt,
+            Instant suspendedAt,
+            Instant terminatedAt) {
+        return esimProfileRepository.save(profile.transitionTo(
+                status,
+                activatedAt,
+                suspendedAt,
+                terminatedAt,
+                Instant.now(clock)));
     }
 
     private static String generateIccid() {
@@ -85,6 +102,6 @@ public class EsimProvisioningService {
     }
 
     private static String generateActivationCode() {
-        return "LPA:1$telecom-connect.example$" + UUID.randomUUID().toString().replace("-", "").toUpperCase(Locale.ROOT);
+        return "LPA:1$" + SMDP_ADDRESS + "$" + UUID.randomUUID().toString().replace("-", "").toUpperCase(Locale.ROOT);
     }
 }

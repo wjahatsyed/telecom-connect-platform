@@ -9,10 +9,30 @@ public record Subscription(
         UUID deviceId,
         String planCode,
         SubscriptionStatus status,
+        Instant activatedAt,
+        Instant suspendedAt,
+        Instant cancelledAt,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        Long version) {
 
-    public Subscription withStatus(SubscriptionStatus nextStatus, Instant updatedAt) {
-        return new Subscription(subscriptionId, customerId, deviceId, planCode, nextStatus, createdAt, updatedAt);
+    public Subscription transitionTo(
+            SubscriptionStatus nextStatus,
+            Instant activatedAt,
+            Instant suspendedAt,
+            Instant cancelledAt,
+            Instant updatedAt) {
+        return new Subscription(
+                subscriptionId,
+                customerId,
+                deviceId,
+                planCode,
+                nextStatus,
+                activatedAt,
+                suspendedAt,
+                cancelledAt,
+                createdAt,
+                updatedAt,
+                version);
     }
 }

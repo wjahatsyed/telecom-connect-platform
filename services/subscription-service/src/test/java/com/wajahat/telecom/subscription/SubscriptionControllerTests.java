@@ -6,21 +6,25 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wajahat.telecom.subscription.domain.Subscription;
+import com.wajahat.telecom.subscription.repository.SubscriptionRepository;
+import com.wajahat.telecom.subscription.service.SubscriptionService;
 import com.wajahat.telecom.subscription.web.SubscriptionController;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(
-        controllers = SubscriptionController.class,
-        includeFilters = @ComponentScan.Filter(
-                type = FilterType.REGEX,
-                pattern = "com\\.wajahat\\.telecom\\.subscription\\.(service|repository|web)\\..*"))
+@WebMvcTest(SubscriptionController.class)
+@Import({SubscriptionService.class, SubscriptionControllerTests.TestConfig.class})
 class SubscriptionControllerTests {
 
     @Autowired
@@ -76,5 +80,34 @@ class SubscriptionControllerTests {
         mockMvc.perform(post("/subscriptions/{subscriptionId}/suspend", subscriptionId))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("Conflict"));
+    }
+
+    @TestConfiguration
+    static class TestConfig {
+
+        @Bean
+        SubscriptionRepository subscriptionRepository() {
+            return new SubscriptionRepository() {
+                private final java.util.Map<UUID, Subscription> subscriptions = new LinkedHashMap<>();
+
+                @Override
+                public Subscription save(Subscription subscription) {
+                    subscriptions.put(subscription.subscriptionId(), subscription);
+                    return subscription;
+                }
+
+                @Override
+                public Optional<Subscription> findById(UUID subscriptionId) {
+                    return Optional.ofNullable(subscriptions.get(subscriptionId));
+                }
+
+                @Override
+                public List<Subscription> findByDeviceId(UUID deviceId) {
+                    return subscriptions.values().stream()
+                            .filter(subscription -> subscription.deviceId().equals(deviceId))
+                            .toList();
+                }
+            };
+        }
     }
 }

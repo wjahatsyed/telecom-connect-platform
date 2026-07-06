@@ -11,6 +11,9 @@ public record SubscriptionResponse(
         UUID deviceId,
         String planCode,
         SubscriptionStatus status,
+        Instant activatedAt,
+        Instant suspendedAt,
+        Instant cancelledAt,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -21,6 +24,9 @@ public record SubscriptionResponse(
                 subscription.deviceId(),
                 subscription.planCode(),
                 subscription.status(),
+                subscription.activatedAt(),
+                subscription.suspendedAt(),
+                subscription.cancelledAt(),
                 subscription.createdAt(),
                 subscription.updatedAt());
     }
